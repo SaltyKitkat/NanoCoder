@@ -138,6 +138,10 @@ def _repl(agent: Agent, config: Config):
             agent.reset()
             console.print("[yellow]Conversation reset.[/yellow]")
             continue
+        if user_input == "/rewind":
+            agent.rewind()
+            console.print("[yellow]Conversation rewind.[/yellow]")
+            continue
         if user_input == "/tokens":
             p = agent.llm.total_prompt_tokens
             c = agent.llm.total_completion_tokens
@@ -202,6 +206,7 @@ def _show_help():
         "[bold]Commands:[/bold]\n"
         "  /help          Show this help\n"
         "  /reset         Clear conversation history\n"
+        "  /rewind        Rewind before last userinput\n"
         "  /model <name>  Switch model mid-conversation\n"
         "  /tokens        Show token usage\n"
         "  /compact       Compress conversation context\n"

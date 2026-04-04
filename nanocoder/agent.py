@@ -120,3 +120,20 @@ class Agent:
     def reset(self):
         """Clear conversation history."""
         self.messages.clear()
+
+    def rewind(self):
+        """Rewind the conversation to before the last user input.
+
+        Removes all messages after (and including) the last user message.
+        If there are no user messages, does nothing.
+        """
+        # Find the last user message index
+        last_user_idx = -1
+        for i in range(len(self.messages) - 1, -1, -1):
+            if self.messages[i]["role"] == "user":
+                last_user_idx = i
+                break
+
+        # If we found a user message, truncate the messages list
+        if last_user_idx >= 0:
+            self.messages = self.messages[:last_user_idx]
