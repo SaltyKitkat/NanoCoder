@@ -101,7 +101,11 @@ def _run_once(agent: Agent, prompt: str):
     def on_tool(name, kwargs):
         console.print(f"\n[dim]> {name}({_brief(kwargs)})[/dim]")
 
-    agent.chat(prompt, on_token=on_token, on_tool=on_tool)
+    def on_reasoning(reasoning):
+        for chunk in reasoning:
+            console.print(f"[dim]{chunk['text']}[/dim]", end="")
+
+    agent.chat(prompt, on_token=on_token, on_tool=on_tool, on_reasoning=on_reasoning)
     print()
 
 
@@ -193,17 +197,30 @@ def _repl(agent: Agent, config: Config):
             continue
 
         # call the agent
-        streamed: list[str] = []
+        streamed = False
+        reasoning_streamed = False
 
         def on_token(tok):
-            streamed.append(tok)
+            nonlocal reasoning_streamed, streamed
+            if reasoning_streamed:
+                reasoning_streamed = False
+                print()
+            streamed = True;
             print(tok, end="", flush=True)
 
         def on_tool(name, kwargs):
             console.print(f"\n[dim]> {name}({_brief(kwargs)})[/dim]")
 
+        def on_reasoning(reasoning):
+            nonlocal reasoning_streamed, streamed
+            reasoning_streamed = True;
+            for chunk in reasoning:
+                console.print(f"[dim]{chunk['text']}[/dim]", end="")
+
         try:
-            response = agent.chat(user_input, on_token=on_token, on_tool=on_tool)
+            response = agent.chat(user_input, on_token=on_token, on_tool=on_tool, on_reasoning=on_reasoning)
+            if reasoning_streamed:
+                print()
             if streamed:
                 print()  # newline after streamed tokens
             else:

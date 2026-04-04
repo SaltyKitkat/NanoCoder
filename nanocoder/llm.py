@@ -64,6 +64,7 @@ class LLM:
         messages: list[dict],
         tools: list[dict] | None = None,
         on_token=None,
+        on_reasoning=None,
     ) -> LLMResponse:
         """Send messages, stream back response, handle tool calls."""
         params: dict = {
@@ -103,6 +104,11 @@ class LLM:
                 content_parts.append(delta.content)
                 if on_token:
                     on_token(delta.content)
+
+            # accumulate reasoning content (non-standard extension, may not exist)
+            if hasattr(delta, 'reasoning_details') and delta.reasoning_details:
+                if on_reasoning:
+                    on_reasoning(delta.reasoning_details)
 
             # accumulate tool calls across chunks
             if delta.tool_calls:
