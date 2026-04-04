@@ -169,6 +169,18 @@ def _repl(agent: Agent, config: Config):
             console.print(f"[green]Session saved: {sid}[/green]")
             console.print(f"Resume with: nanocoder -r {sid}")
             continue
+        if user_input.startswith("/load "):
+            resume = user_input[6:].strip()
+            if resume:
+                loaded = load_session(resume)
+                if loaded:
+                    agent.messages, loaded_model = loaded
+                    agent.llm.model = loaded_model
+                    config.model = loaded_model
+                    console.print(f"[green]Resumed session: {resume}[/green]")
+                else:
+                    console.print(f"[red]Session '{resume}' not found.[/red]")
+            continue
         if user_input == "/sessions":
             sessions = list_sessions()
             if not sessions:
