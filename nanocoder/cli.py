@@ -147,12 +147,14 @@ def _repl(agent: Agent, config: Config):
             c = agent.llm.total_completion_tokens
             console.print(f"Tokens used this session: [cyan]{p}[/cyan] prompt + [cyan]{c}[/cyan] completion = [bold]{p+c}[/bold] total")
             continue
-        if user_input.startswith("/model "):
+        if user_input.startswith("/model"):
             new_model = user_input[7:].strip()
             if new_model:
                 agent.llm.model = new_model
                 config.model = new_model
                 console.print(f"Switched to [cyan]{new_model}[/cyan]")
+            else:
+                console.print(f"[yellow]Current model: [cyan]{config.model}[cyan][/yellow]")
             continue
         if user_input == "/compact":
             from .context import estimate_tokens
@@ -169,7 +171,7 @@ def _repl(agent: Agent, config: Config):
             console.print(f"[green]Session saved: {sid}[/green]")
             console.print(f"Resume with: nanocoder -r {sid}")
             continue
-        if user_input.startswith("/load "):
+        if user_input.startswith("/load"):
             resume = user_input[6:].strip()
             if resume:
                 loaded = load_session(resume)
