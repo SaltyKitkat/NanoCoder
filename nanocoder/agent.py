@@ -48,7 +48,20 @@ class Agent:
         """Process one user message. May involve multiple LLM/tool rounds."""
         self.messages.append({"role": "user", "content": user_input})
         self.context.maybe_compress(self.messages, self.llm)
+        return self._run_loop(on_token, on_tool, on_reasoning)
 
+    def retry(self, on_token=None, on_tool=None, on_reasoning=None) -> str:
+        """Re-run the LLM loop with the current messages.
+
+        Use this after a server error: the last message is already in
+        self.messages, so we just need to ask the LLM again.
+        """
+        if not self.messages:
+            return "(nothing to retry)"
+        return self._run_loop(on_token, on_tool, on_reasoning)
+
+    def _run_loop(self, on_token=None, on_tool=None, on_reasoning=None) -> str:
+        """Core LLM/tool execution loop."""
         for _ in range(self.max_rounds):
             resp = self.llm.chat(
                 messages=self._full_messages(),

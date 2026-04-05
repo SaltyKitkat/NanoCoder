@@ -146,6 +146,9 @@ def _repl(agent: Agent, config: Config):
             agent.rewind()
             console.print("[yellow]Conversation rewind.[/yellow]")
             continue
+        if user_input == "/retry":
+            _do_retry(agent)
+            continue
         if user_input == "/tokens":
             p = agent.llm.total_prompt_tokens
             c = agent.llm.total_completion_tokens
@@ -197,39 +200,54 @@ def _repl(agent: Agent, config: Config):
             continue
 
         # call the agent
-        streamed = False
-        reasoning_streamed = False
+        _run_agent(agent, user_input, retry=False)
 
-        def on_token(tok):
-            nonlocal reasoning_streamed, streamed
-            if reasoning_streamed:
-                reasoning_streamed = False
-                print()
-            streamed = True;
-            print(tok, end="", flush=True)
 
-        def on_tool(name, kwargs):
-            console.print(f"\n[dim]> {name}({_brief(kwargs)})[/dim]")
+def _run_agent(agent: Agent, user_input: str, retry: bool = False):
+    """Run the agent with streaming callbacks and error handling."""
+    streamed = False
+    reasoning_streamed = False
 
-        def on_reasoning(reasoning):
-            nonlocal reasoning_streamed, streamed
-            reasoning_streamed = True;
-            for chunk in reasoning:
-                console.print(f"[dim]{chunk['text']}[/dim]", end="")
+    def on_token(tok):
+        nonlocal reasoning_streamed, streamed
+        if reasoning_streamed:
+            reasoning_streamed = False
+            print()
+        streamed = True
+        print(tok, end="", flush=True)
 
-        try:
+    def on_tool(name, kwargs):
+        console.print(f"\n[dim]> {name}({_brief(kwargs)})[/dim]")
+
+    def on_reasoning(reasoning):
+        nonlocal reasoning_streamed, streamed
+        reasoning_streamed = True
+        for chunk in reasoning:
+            console.print(f"[dim]{chunk['text']}[/dim]", end="")
+
+    try:
+        if retry:
+            response = agent.retry(on_token=on_token, on_tool=on_tool, on_reasoning=on_reasoning)
+        else:
             response = agent.chat(user_input, on_token=on_token, on_tool=on_tool, on_reasoning=on_reasoning)
-            if reasoning_streamed:
-                print()
-            if streamed:
-                print()  # newline after streamed tokens
-            else:
-                # response wasn't streamed (came after tool calls)
-                console.print(Markdown(response))
-        except KeyboardInterrupt:
-            console.print("\n[yellow]Interrupted.[/yellow]")
-        except Exception as e:
-            console.print(f"\n[red]Error: {e}[/red]")
+        if reasoning_streamed:
+            print()
+        if streamed:
+            print()
+        else:
+            console.print(Markdown(response))
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted.[/yellow]")
+    except Exception as e:
+        console.print(f"\n[red]Error: {e}[/red]")
+
+
+def _do_retry(agent: Agent):
+    """Re-run the LLM with the current message history."""
+    if not agent.messages:
+        console.print("[yellow]Nothing to retry.[/yellow]")
+        return
+    _run_agent(agent, "", retry=True)
 
 
 def _show_help():
@@ -238,6 +256,7 @@ def _show_help():
         "  /help          Show this help\n"
         "  /reset         Clear conversation history\n"
         "  /rewind        Rewind before last userinput\n"
+        "  /retry         Retry the last prompt (after server errors)\n"
         "  /model <name>  Switch model mid-conversation\n"
         "  /tokens        Show token usage\n"
         "  /compact       Compress conversation context\n"
