@@ -74,7 +74,7 @@ class ContextManager:
         with a one-line summary to reclaim context space.
         """
         changed = False
-        for m in messages:
+        for m in messages[:-5]:
             if m.get("role") != "tool":
                 continue
             content = m.get("content", "")
