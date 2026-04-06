@@ -149,6 +149,9 @@ def _repl(agent: Agent, config: Config):
         if user_input == "/retry":
             _do_retry(agent)
             continue
+        if user_input == "/md":
+            _show_last_md(agent)
+            continue
         if user_input == "/tokens":
             p = agent.llm.total_prompt_tokens
             c = agent.llm.total_completion_tokens
@@ -187,11 +190,7 @@ def _repl(agent: Agent, config: Config):
                     agent.llm.model = loaded_model
                     config.model = loaded_model
                     console.print(f"[green]Resumed session: {resume}[/green]")
-                    # show last assistant message so user can catch up
-                    for m in reversed(agent.messages):
-                        if m.get("role") == "assistant" and m.get("content"):
-                            console.print(Markdown(m["content"]))
-                            break
+                    _show_last_md(agent)
                 else:
                     console.print(f"[red]Session '{resume}' not found.[/red]")
             continue
@@ -265,6 +264,15 @@ def _do_retry(agent: Agent):
     _run_agent(agent, "", retry=True)
 
 
+def _show_last_md(agent: Agent):
+    """Show the last assistant message rendered as Markdown."""
+    for m in reversed(agent.messages):
+        if m.get("role") == "assistant" and m.get("content"):
+            console.print(Markdown(m["content"]))
+            return
+    console.print("[dim]No assistant messages yet.[/dim]")
+
+
 def _show_help():
     console.print(Panel(
         "[bold]Commands:[/bold]\n"
@@ -272,6 +280,7 @@ def _show_help():
         "  /reset         Clear conversation history\n"
         "  /rewind        Rewind before last userinput\n"
         "  /retry         Retry the last prompt (after server errors)\n"
+        "  /md            Show last assistant message as Markdown\n"
         "  /model <name>  Switch model mid-conversation\n"
         "  /tokens        Show token usage\n"
         "  /compact       Compress conversation context\n"
