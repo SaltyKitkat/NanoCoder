@@ -176,8 +176,9 @@ def _repl(agent: Agent, config: Config):
             else:
                 console.print(f"[dim]Nothing to compress ({before} tokens, {len(agent.messages)} messages)[/dim]")
             continue
-        if user_input == "/save":
-            sid = save_session(agent.messages, config.model)
+        if user_input.startswith("/save"):
+            name = user_input[6:].strip() or None
+            sid = save_session(agent.messages, config.model, name)
             console.print(f"[green]Session saved: {sid}[/green]")
             console.print(f"Resume with: nanocoder -r {sid}")
             continue
@@ -284,7 +285,7 @@ def _show_help():
         "  /model <name>  Switch model mid-conversation\n"
         "  /tokens        Show token usage\n"
         "  /compact       Compress conversation context\n"
-        "  /save          Save session to disk\n"
+        "  /save [name]   Save session to disk\n"
         "  /sessions      List saved sessions\n"
         "  /delete <id>   Delete a saved session\n"
         "  quit           Exit NanoCoder",
