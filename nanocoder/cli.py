@@ -126,7 +126,8 @@ def _repl(agent: Agent, config: Config):
         try:
             user_input = pt_prompt("You > ", history=history).strip()
         except (EOFError, KeyboardInterrupt):
-            console.print("\nBye!")
+            _show_tokens(agent)
+            console.print("Bye!")
             break
 
         if not user_input:
@@ -153,9 +154,7 @@ def _repl(agent: Agent, config: Config):
             _show_last_md(agent)
             continue
         if user_input == "/tokens":
-            p = agent.llm.total_prompt_tokens
-            c = agent.llm.total_completion_tokens
-            console.print(f"Tokens used this session: [cyan]{p}[/cyan] prompt + [cyan]{c}[/cyan] completion = [bold]{p+c}[/bold] total")
+            _show_tokens(agent)
             continue
         if user_input.startswith("/model"):
             new_model = user_input[7:].strip()
@@ -272,6 +271,13 @@ def _show_last_md(agent: Agent):
             console.print(Markdown(m["content"]))
             return
     console.print("[dim]No assistant messages yet.[/dim]")
+
+
+def _show_tokens(agent: Agent):
+    """Print token usage."""
+    p = agent.llm.total_prompt_tokens
+    c = agent.llm.total_completion_tokens
+    console.print(f"Tokens used this session: [cyan]{p}[/cyan] prompt + [cyan]{c}[/cyan] completion = [bold]{p+c}[/bold] total")
 
 
 def _show_help():
