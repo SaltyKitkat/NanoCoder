@@ -90,7 +90,7 @@ def main():
         return
 
     # interactive REPL
-    _repl(agent, config)
+    _repl(agent, config, args.resume)
 
 
 def _run_once(agent: Agent, prompt: str):
@@ -109,7 +109,7 @@ def _run_once(agent: Agent, prompt: str):
     print()
 
 
-def _repl(agent: Agent, config: Config):
+def _repl(agent: Agent, config: Config, initial_session: str | None = None):
     """Interactive read-eval-print loop."""
     console.print(Panel(
         f"[bold]NanoCoder[/bold] v{__version__}\n"
@@ -121,6 +121,8 @@ def _repl(agent: Agent, config: Config):
 
     hist_path = os.path.expanduser("~/.nanocoder_history")
     history = FileHistory(hist_path)
+
+    current_session = initial_session  # tracks the active session name for /save
 
     while True:
         try:
@@ -176,8 +178,9 @@ def _repl(agent: Agent, config: Config):
                 console.print(f"[dim]Nothing to compress ({before} tokens, {len(agent.messages)} messages)[/dim]")
             continue
         if user_input.startswith("/save"):
-            name = user_input[6:].strip() or None
+            name = user_input[6:].strip() or current_session
             sid = save_session(agent.messages, config.model, name)
+            current_session = sid
             console.print(f"[green]Session saved: {sid}[/green]")
             console.print(f"Resume with: nanocoder -r {sid}")
             continue
@@ -189,6 +192,7 @@ def _repl(agent: Agent, config: Config):
                     agent.messages, loaded_model = loaded
                     agent.llm.model = loaded_model
                     config.model = loaded_model
+                    current_session = resume
                     console.print(f"[green]Resumed session: {resume}[/green]")
                     _show_last_md(agent)
                 else:
