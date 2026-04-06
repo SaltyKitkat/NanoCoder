@@ -187,6 +187,11 @@ def _repl(agent: Agent, config: Config):
                     agent.llm.model = loaded_model
                     config.model = loaded_model
                     console.print(f"[green]Resumed session: {resume}[/green]")
+                    # show last assistant message so user can catch up
+                    for m in reversed(agent.messages):
+                        if m.get("role") == "assistant" and m.get("content"):
+                            console.print(Markdown(m["content"]))
+                            break
                 else:
                     console.print(f"[red]Session '{resume}' not found.[/red]")
             continue
