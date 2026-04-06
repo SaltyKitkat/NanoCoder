@@ -148,6 +148,7 @@ def _repl(agent: Agent, config: Config, initial_session: str | None = None):
         if user_input == "/rewind":
             agent.rewind()
             console.print("[yellow]Conversation rewind.[/yellow]")
+            _show_last_md(agent)
             continue
         if user_input == "/retry":
             _do_retry(agent)
