@@ -13,7 +13,7 @@ from prompt_toolkit.history import FileHistory
 from .agent import Agent
 from .llm import LLM
 from .config import Config
-from .session import save_session, load_session, list_sessions
+from .session import save_session, load_session, list_sessions, delete_session
 from . import __version__
 
 console = Console()
@@ -198,6 +198,16 @@ def _repl(agent: Agent, config: Config):
                 for s in sessions:
                     console.print(f"  [cyan]{s['id']}[/cyan] ({s['model']}, {s['saved_at']}) {s['preview']}")
             continue
+        if user_input.startswith("/delete"):
+            sid = user_input[8:].strip()
+            if sid:
+                if delete_session(sid):
+                    console.print(f"[green]Session '{sid}' deleted.[/green]")
+                else:
+                    console.print(f"[red]Session '{sid}' not found.[/red]")
+            else:
+                console.print("[yellow]Usage: /delete <session_id>[/yellow]")
+            continue
 
         # call the agent
         _run_agent(agent, user_input, retry=False)
@@ -262,6 +272,7 @@ def _show_help():
         "  /compact       Compress conversation context\n"
         "  /save          Save session to disk\n"
         "  /sessions      List saved sessions\n"
+        "  /delete <id>   Delete a saved session\n"
         "  quit           Exit NanoCoder",
         title="NanoCoder Help",
         border_style="dim",

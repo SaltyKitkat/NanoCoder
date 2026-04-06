@@ -41,6 +41,15 @@ def load_session(session_id: str) -> tuple[list[dict], str] | None:
     return data["messages"], data["model"]
 
 
+def delete_session(session_id: str) -> bool:
+    """Delete a saved session. Returns True if deleted."""
+    path = SESSIONS_DIR / f"{session_id}.json"
+    if path.exists():
+        path.unlink()
+        return True
+    return False
+
+
 def list_sessions() -> list[dict]:
     """List available sessions, newest first."""
     if not SESSIONS_DIR.exists():
